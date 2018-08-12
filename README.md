@@ -38,6 +38,22 @@ There are two kinds of entries in the graph description
 - Comments are prefixed by one of the following symbol: `//`, `#`, these lines are ignored
 - Nodes are prefixed by the color to display (e.g. red, blue, green, firebrick, darkgreen, etc), invalid colors will throw
 
+## Using the optional header
+
+You can use the first line to specify custom colors as follows
+```
+[power:firebrick, board:green, actuator:blue, sensor:yellow]
+power Battery
+    actuator Actuator A
+    actuator Actuator B
+    # Ignore this line
+    power Power regulator
+        board Computer board
+            sensor Sensor A
+            sensor Sensor B
+```
+this will produce the same output as above, but you might find it easier to maintain.
+
 ## Dev & Deploy
 
 Deploy by running
