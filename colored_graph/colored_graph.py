@@ -41,7 +41,7 @@ def parse_description(description_file):
         tasks = list((line.lstrip(), _depth_level(line)) for line in lines if len(line) > 0)
 
         nodes = list(Node(name=_task_strip(task), color=_task_color(task)) for task, depth in set(tasks))
-        edges = list(Edge(src=_task_strip(src), dst=_task_strip(dst), color=_task_color(src) and _task_color(dst))
+        edges = list(Edge(src=_task_strip(src), dst=_task_strip(dst), color=_task_color(src))
                          for src, dst in set(_node_pairs(tasks, list(), list())))
 
         return nodes, edges
