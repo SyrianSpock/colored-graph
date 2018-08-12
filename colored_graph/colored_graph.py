@@ -24,7 +24,7 @@ def parse_arguments():
 
     return parser.parse_args()
 
-def cleanup_test_to_comply_with_dot(line):
+def replace_bad_characters(line):
     return line \
         .replace(':', 'ː') \
         .replace('(', '\\(') \
@@ -35,8 +35,11 @@ def parse_description(description_file):
         text = file.read()
         lines = text.split('\n')
 
+        header = lines[0] if _is_valid_header(lines[0]) else None
+        lines = lines[1:] if header else lines
+
         lines = list(filter(lambda line: all(symbol not in line.lstrip() for symbol in COMMENT_SYMBOLS), lines))
-        lines = list(map(cleanup_test_to_comply_with_dot, lines))
+        lines = list(map(replace_bad_characters, lines))
         lines = list(map(lambda line: line.replace('\t', ' ' * 4), lines))
         tasks = list((line.lstrip(), _depth_level(line)) for line in lines if len(line) > 0)
 
@@ -44,7 +47,18 @@ def parse_description(description_file):
         edges = list(Edge(src=_task_strip(src), dst=_task_strip(dst), color=_task_color(src))
                          for src, dst in set(_node_pairs(tasks, list(), list())))
 
-        return nodes, edges
+        return parse_header(header), nodes, edges
+
+def parse_header(header):
+    fields = header[1:-1].split(',')
+    split = lambda x: x.split(':')
+    strip = lambda x: x.lstrip()
+    pairs = list(map(split, (map(strip, fields))))
+    colors = dict(pairs)
+    return colors
+
+def _is_valid_header(line):
+    return line.startswith('[') and line.endswith(']')
 
 def _task_color(task):
     return task.split(' ')[0]
@@ -72,18 +86,20 @@ def _node_pairs(tasks, pairs, parents):
     else:
         return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents, child])
 
-def draw_graph(nodes, edges, format):
+def draw_graph(colors, nodes, edges, format):
     graph = Digraph(strict=True, format=format)
-    for node in nodes: _append_node(graph, node)
-    for edge in edges: _append_edge(graph, edge)
+    for node in nodes: _append_node(graph, node, color_palette=colors)
+    for edge in edges: _append_edge(graph, edge, color_palette=colors)
     return graph
 
-def _append_node(graph, node):
+def _append_node(graph, node, color_palette):
     color = node.color
+    if color in color_palette.keys(): color = color_palette[color]
     graph.node(node.name, color=color, fontcolor=color)
 
-def _append_edge(graph, edge):
+def _append_edge(graph, edge, color_palette):
     color = edge.color
+    if color in color_palette.keys(): color = color_palette[color]
     graph.edge(edge.src, edge.dst, color=color)
 
 def render_graph(description, view, output_file, format):
