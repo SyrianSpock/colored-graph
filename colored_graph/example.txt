@@ -1,0 +1,9 @@
+firebrick Extend X with Y
+    blue Remove flag Z from X
+        blue Replace D with E
+            blue Check C
+    # Ignore this line
+    firebrick Add field X in Y
+        blue Do fix A
+        firebrick Add B
+        blue Check C
