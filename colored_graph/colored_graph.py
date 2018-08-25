@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict, namedtuple
+from functools import reduce
 import time
 import os
 
@@ -9,7 +10,7 @@ from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 
 
 Edge = namedtuple('Edge', ['src', 'dst', 'color'])
-Node = namedtuple('Node', ['name', 'color'])
+Node = namedtuple('Node', ['name', 'color', 'rank'])
 COMMENT_SYMBOLS = ['#', '//']
 
 def parse_arguments():
@@ -53,6 +54,27 @@ def split_subgraphs(lines):
     subgraphs = list(map(parse_single_graph, subgraphs))
     return subgraphs
 
+def remove_duplicates(nodes):
+    def find_duplicate(node, nodes):
+        return any(node for node in node_already_added(nodes))
+
+    def remove_node_by_name(node, nodes):
+        match = next(x for x in filtered_nodes if x.name == node.name)
+        filtered_nodes.remove(match)
+        return filtered_nodes, match
+
+    filtered_nodes = []
+    for node in nodes:
+        node_already_added = lambda nodes: filter(lambda x: x.name == node.name, nodes)
+        if find_duplicate(node, filtered_nodes):
+            filtered_nodes, match = remove_node_by_name(node, filtered_nodes)
+            match = Node(name=match.name, color=match.color, rank=min(match.rank, node.rank))
+            filtered_nodes.append(match)
+        else:
+            filtered_nodes.append(node)
+
+    return filtered_nodes
+
 def parse_single_graph(lines):
     lines = list(filter(lambda line: all(symbol not in line.lstrip() for symbol in COMMENT_SYMBOLS), lines))
     lines = list(map(replace_bad_characters, lines))
@@ -61,10 +83,12 @@ def parse_single_graph(lines):
 
     root, tasks = tasks[0], tasks[1:]
 
-    root = Node(name=_task_strip(root[0]), color=_task_color(root[0]))
-    nodes = list(Node(name=_task_strip(task), color=_task_color(task)) for task, depth in set(tasks))
+    root = Node(name=_task_strip(root[0]), color=_task_color(root[0]), rank=0)
+    nodes = list(Node(name=_task_strip(task), color=_task_color(task), rank=depth) for task, depth in set(tasks))
     edges = list(Edge(src=_task_strip(src), dst=_task_strip(dst), color=_task_color(src))
                      for src, dst in set(_node_pairs(tasks, list(), list())))
+
+    nodes = remove_duplicates(nodes)
 
     return root, nodes, edges
 
@@ -110,17 +134,31 @@ def _node_pairs(tasks, pairs, parents):
         return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents, (child, depth)])
 
 def draw_graph(colors, subgraphs, format):
-    graph = Digraph(strict=True, format=format)
+    graph = Digraph(strict=True, format=format, node_attr={'shape': 'box'})
 
     for subgraph in subgraphs:
         root, nodes, edges = subgraph
 
-        cluster = Digraph(name='cluster_' + root.name, graph_attr={'label': root.name, 'color': _sanitize_color(root.color, colors)}, node_attr={'rank': 'same'})
+        cluster = Digraph(name='cluster_' + root.name, graph_attr={'label': root.name, 'color': _sanitize_color(root.color, colors)})
 
         for node in nodes: _append_node(cluster, node, color_palette=colors)
         for edge in edges: _append_edge(cluster, edge, color_palette=colors)
+        cluster = constrain_nodes_on_same_level(cluster, nodes)
 
         graph.subgraph(cluster)
+
+    return graph
+
+def constrain_nodes_on_same_level(graph, nodes):
+    ranks = []
+    for node in nodes:
+        while node.rank > len(ranks):
+            ranks.append([])
+        ranks[node.rank - 1].append(str(node.name))
+
+    for rank in ranks:
+        all_nodes = '; '.join(list(map(lambda x: '"' + x + '"', rank)))
+        graph.body.append('\t{rank = same; ' + all_nodes + '}')
 
     return graph
 
@@ -129,7 +167,7 @@ def _sanitize_color(color, color_palette):
 
 def _append_node(graph, node, color_palette):
     color = _sanitize_color(node.color, color_palette)
-    graph.node(node.name, color=color, fontcolor=color)
+    graph.node(node.name, color=color, fontcolor=color, group=str(node.rank))
 
 def _append_edge(graph, edge, color_palette):
     color = _sanitize_color(edge.color, color_palette)
