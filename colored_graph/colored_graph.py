@@ -50,6 +50,7 @@ def parse_description(description_file):
         return parse_header(header), nodes, edges
 
 def parse_header(header):
+    if header is None: return {}
     fields = header[1:-1].split(',')
     split = lambda x: x.split(':')
     strip = lambda x: x.lstrip()
