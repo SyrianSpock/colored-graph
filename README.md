@@ -6,14 +6,15 @@ Python tool to draw graphs in colors.
 
 Start by saving this description file as as `example.txt`
 ```
-firebrick Battery
-    blue Actuator A
-    blue Actuator B
-    # Ignore this line
-    firebrick Power regulator
-        green Computer board
-            yellow Sensor A
-            yellow Sensor B
+black Robot
+    firebrick Battery
+        blue Actuator A
+        blue Actuator B
+        firebrick Power board
+            black Computer board
+    black Computer board
+        darkgreen Sensor A
+        darkgreen Sensor B
 ```
 Then run
 ```bash
