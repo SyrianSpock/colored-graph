@@ -80,12 +80,15 @@ def _node_pairs(tasks, pairs, parents):
     child, depth = tasks[0]
 
     if len(parents):
-        pairs.append((parents[-(len(parents) - depth + 1)], child))
+        for parent, parent_depth in reversed(parents):
+            if parent_depth < depth:
+                pairs.append((parent, child))
+                break
 
     if len(parents) != depth:
-        return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents[:depth], child])
+        return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents[:depth], (child, depth)])
     else:
-        return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents, child])
+        return _node_pairs(tasks=tasks[1:], pairs=pairs, parents=[*parents, (child, depth)])
 
 def draw_graph(colors, nodes, edges, format):
     graph = Digraph(strict=True, format=format)

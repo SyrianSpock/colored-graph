@@ -1,8 +1,9 @@
-firebrick Battery
-    blue Actuator A
-    blue Actuator B
-    # Ignore this line
-    firebrick Power board
-        black Computer board
-            darkgreen Sensor A
-            darkgreen Sensor B
+black Robot
+    firebrick Battery
+        blue Actuator A
+        blue Actuator B
+        firebrick Power board
+            black Computer board
+    black Computer board
+        darkgreen Sensor A
+        darkgreen Sensor B
