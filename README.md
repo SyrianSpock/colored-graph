@@ -43,15 +43,16 @@ There are two kinds of entries in the graph description
 
 You can use the first line to specify custom colors as follows
 ```
-[power:firebrick, board:green, actuator:blue, sensor:yellow]
-power Battery
-    actuator Actuator A
-    actuator Actuator B
-    # Ignore this line
-    power Power regulator
-        board Computer board
-            sensor Sensor A
-            sensor Sensor B
+[power:firebrick, board:black, actuator:blue, sensor:darkgreen]
+_ Robot
+    power Battery
+        actuator Actuator A
+        actuator Actuator B
+        power Power board
+            black Computer board
+    black Computer board
+        sensor Sensor A
+        sensor Sensor B
 ```
 this will produce the same output as above, but you might find it easier to maintain.
 
